@@ -41,9 +41,9 @@ class MainActivity : ComponentActivity() {
                             .padding(innerPadding)
                             .clickable {
                                val isAllow =  FrequencyController.getInstance().isAllowed(
-                                    MY_ACTION_KEY,
-                                    MAX_CALLS,
-                                    TIME_WINDOW_SECONDS
+                                   performAction().hashCode().toString(),
+                                   MAX_CALLS,
+                                   TIME_WINDOW_SECONDS
                                 )
 
                                 if (isAllow) {
@@ -64,6 +64,7 @@ class MainActivity : ComponentActivity() {
 }
 
 fun performAction() {
+
     println("调用成功")
 }
 
