@@ -15,6 +15,7 @@ import com.redwolf.plugin_runtime.ModuleRegistry
 import com.redwolf.plugin_runtime.NetworkPolicy
 import com.redwolf.plugin_runtime.PluginRuntime
 import com.redwolf.plugin_runtime.Strategy
+
 @RequiresApi(Build.VERSION_CODES.P)
 class DemoLauncherActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,8 +43,8 @@ class DemoLauncherActivity : AppCompatActivity() {
             "② 本地缓存命中（已预热）"
         ) { v: View? -> DemoCached.run(this) }
         addBtn(root, "③ 远端下载并加载") { v: View? -> DemoRemote.run(this) }
-        addBtn(root,"④ 宿主本地类（无需 APK）") { DemoHostLocal.run(this) }
-        addBtn(root,"④ 宿主本地 LocalHelloActivity (__host__) ") {
+        addBtn(root, "④ 宿主本地类（无需 APK）") { DemoHostLocal.run(this) }
+        addBtn(root, "④ 宿主本地 LocalHelloActivity (__host__) ") {
             val intent = PluginProxyActivity.createIntent(
                 ctx = this,
                 moduleName = ProxyKeys.HOST_LOCAL_MODULE,
@@ -126,6 +127,7 @@ class DemoLauncherActivity : AppCompatActivity() {
             ctx.startActivity(i)
         }
     }
+
     object DemoHostLocal {
         fun run(ctx: Context) {
             val intent = PluginProxyActivity.createIntent(
@@ -144,6 +146,7 @@ class DemoLauncherActivity : AppCompatActivity() {
             ctx.startActivity(intent)
         }
     }
+
     companion object {
         const val HOST_LOCAL_MODULE = "__host__"
         private fun addBtn(parent: ViewGroup, text: String?, l: View.OnClickListener?) {

@@ -6,7 +6,7 @@ plugins {
 
 }
 apply {
-    from("publish.gradle.kts")
+    from("publishA.gradle.kts")
 }
 android {
     namespace = "com.redwolf.plugin_render_advanced"

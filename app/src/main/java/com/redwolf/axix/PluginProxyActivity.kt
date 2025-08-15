@@ -13,10 +13,12 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import com.redwolf.axix.DemoLauncherActivity.Companion.HOST_LOCAL_MODULE
 import com.redwolf.plugin_api.PluginActivity
 import com.redwolf.plugin_api.ProxyKeys
-import com.redwolf.plugin_runtime.*
+import com.redwolf.plugin_runtime.NetworkPolicy
+import com.redwolf.plugin_runtime.PluginHandle
+import com.redwolf.plugin_runtime.PluginRuntime
+import com.redwolf.plugin_runtime.Strategy
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -40,7 +42,8 @@ class PluginProxyActivity : AppCompatActivity() {
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
     private var future: Future<*>? = null
     val EXTRA_ALLOW_PREFIXES = "allow_prefixes"
-    @Volatile private var destroyed = false
+    @Volatile
+    private var destroyed = false
 
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,6 +62,7 @@ class PluginProxyActivity : AppCompatActivity() {
 //        }
         startLoad(savedInstanceState)
     }
+
     private fun launchHostLocal(saved: Bundle?) {
         try {
             val cls = Class.forName(targetClass)
@@ -77,6 +81,7 @@ class PluginProxyActivity : AppCompatActivity() {
             postToastFail(e); finish()
         }
     }
+
     private fun postToastFail(t: Throwable) {
         if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
             toastFail(t)
@@ -86,7 +91,11 @@ class PluginProxyActivity : AppCompatActivity() {
     }
 
 
-    private fun allowTargetClass(pluginPkg: String?, fqcn: String, extra: Array<String> = emptyArray()): Boolean {
+    private fun allowTargetClass(
+        pluginPkg: String?,
+        fqcn: String,
+        extra: Array<String> = emptyArray()
+    ): Boolean {
         // 兜底：如果没有 pkg，用类自己的包名
 //        val pkg = (pluginPkg ?: "").ifBlank { fqcn.substringBeforeLast('.', "") }
 //        if (fqcn.startsWith(pkg)) return true
@@ -95,6 +104,7 @@ class PluginProxyActivity : AppCompatActivity() {
                 || fqcn.startsWith("com.redwolf.axix.local") // ★ 放行宿主本地类
                 || fqcn.startsWith(pluginPkg ?: "")
     }
+
     @RequiresApi(Build.VERSION_CODES.P)
     private fun startLoad(saved: Bundle?) {
         if (moduleName == ProxyKeys.HOST_LOCAL_MODULE) {
@@ -130,20 +140,21 @@ class PluginProxyActivity : AppCompatActivity() {
                 )
                 if (destroyed) return@submit
                 runOnUiThread {
-                val cls = h.cl.loadClass(targetClass)
-                require(PluginActivity::class.java.isAssignableFrom(cls)) { "目标需继承 PluginActivity" }
+                    val cls = h.cl.loadClass(targetClass)
+                    require(PluginActivity::class.java.isAssignableFrom(cls)) { "目标需继承 PluginActivity" }
 
-                @Suppress("UNCHECKED_CAST")
-                val ctor = (cls as Class<out PluginActivity>).getDeclaredConstructor().apply { isAccessible = true }
-                val inst = ctor.newInstance()
+                    @Suppress("UNCHECKED_CAST")
+                    val ctor = (cls as Class<out PluginActivity>).getDeclaredConstructor()
+                        .apply { isAccessible = true }
+                    val inst = ctor.newInstance()
 
-                val loadedPkg = cls.`package`?.name ?: ""
-                val effectivePkg =
-                    if (h.pkg.isNullOrBlank() || !loadedPkg.startsWith(h.pkg!!)) loadedPkg else h.pkg!!
+                    val loadedPkg = cls.`package`?.name ?: ""
+                    val effectivePkg =
+                        if (h.pkg.isBlank() || !loadedPkg.startsWith(h.pkg)) loadedPkg else h.pkg
 
-                // ★ 用 h.res，不要用 handle?.res；先赋 handle，再回到主线
-                inst.attach(this, h.res, effectivePkg)
-                handle = h
+                    // ★ 用 h.res，不要用 handle?.res；先赋 handle，再回到主线
+                    inst.attach(this, h.res, effectivePkg)
+                    handle = h
 
 
                     progress.visibility = ProgressBar.GONE
@@ -159,6 +170,7 @@ class PluginProxyActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun rootCause(t: Throwable): Throwable =
         generateSequence(t) { it.cause }.last()
 
@@ -173,30 +185,68 @@ class PluginProxyActivity : AppCompatActivity() {
             is ClassNotFoundException -> "找不到类：$targetClass"
             else -> root.message ?: root::class.java.simpleName
         }
-        android.widget.Toast.makeText(this, "加载失败：$msg", android.widget.Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "加载失败：$msg", Toast.LENGTH_LONG)
+            .show()
     }
-    private fun allowTargetClass(pluginPkg: String?, fqcn: String?): Boolean {
-        return fqcn != null && pluginPkg != null && fqcn.startsWith(pluginPkg)
+    private fun cancelLoad() {
+        future?.takeIf { !it.isDone }?.cancel(true)
     }
-
-    private fun cancelLoad() { future?.takeIf { !it.isDone }?.cancel(true) }
 
     // —— 生命周期/事件转发（全部走 performXxx 桥接） ——
-    override fun onStart() { super.onStart(); plugin?.performStart() }
-    override fun onResume() { super.onResume(); plugin?.performResume() }
-    override fun onPause() { plugin?.performPause(); super.onPause() }
-    override fun onStop() { plugin?.performStop(); super.onStop() }
+    override fun onStart() {
+        super.onStart(); plugin?.performStart()
+    }
+
+    override fun onResume() {
+        super.onResume(); plugin?.performResume()
+    }
+
+    override fun onPause() {
+        plugin?.performPause(); super.onPause()
+    }
+
+    override fun onStop() {
+        plugin?.performStop(); super.onStop()
+    }
+
     override fun onDestroy() {
         destroyed = true
         cancelLoad(); executor.shutdownNow()
         plugin?.performDestroy(); plugin = null
         super.onDestroy()
     }
-    override fun onSaveInstanceState(outState: Bundle) { super.onSaveInstanceState(outState); plugin?.performSaveInstanceState(outState) }
-    override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); plugin?.performNewIntent(intent) }
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) { super.onActivityResult(requestCode, resultCode, data); plugin?.performActivityResult(requestCode, resultCode, data) }
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) { super.onRequestPermissionsResult(requestCode, permissions, grantResults); plugin?.performRequestPermissionsResult(requestCode, permissions, grantResults) }
-    override fun onBackPressed() { plugin?.performBackPressed(); if (!isFinishing) super.onBackPressed() }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState); plugin?.performSaveInstanceState(outState)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent); setIntent(intent); plugin?.performNewIntent(intent)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data); plugin?.performActivityResult(
+            requestCode,
+            resultCode,
+            data
+        )
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(
+            requestCode,
+            permissions,
+            grantResults
+        ); plugin?.performRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
+    override fun onBackPressed() {
+        plugin?.performBackPressed(); if (!isFinishing) super.onBackPressed()
+    }
 
     // —— 资源/类加载委托 ——
     override fun getClassLoader(): ClassLoader = handle?.cl ?: super.getClassLoader()
@@ -209,7 +259,13 @@ class PluginProxyActivity : AppCompatActivity() {
         val size = (48 * resources.displayMetrics.density).toInt()
         val lp = FrameLayout.LayoutParams(size, size).apply { gravity = Gravity.CENTER }
         root.addView(progress, lp)
-        setContentView(root, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        setContentView(
+            root,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
     }
 
     private fun parseExtras() {
@@ -220,10 +276,13 @@ class PluginProxyActivity : AppCompatActivity() {
             remoteUrl = e.getString(ProxyKeys.EXTRA_REMOTE_URL)
             sha256 = e.getString(ProxyKeys.EXTRA_SHA256)
             certSha256 = e.getString(ProxyKeys.EXTRA_CERT_SHA256)
-            strategy = e.getString(ProxyKeys.EXTRA_STRATEGY)?.let { Strategy.valueOf(it) } ?: Strategy.LOCAL_FIRST
+            strategy = e.getString(ProxyKeys.EXTRA_STRATEGY)?.let { Strategy.valueOf(it) }
+                ?: Strategy.LOCAL_FIRST
             themeResId = e.getInt(ProxyKeys.EXTRA_THEME_RES_ID, 0)
             useFragmentFactory = e.getBoolean(ProxyKeys.EXTRA_USE_FRAGMENT_FACTORY, true)
-            networkPolicy = e.getString(ProxyKeys.EXTRA_NETWORK_POLICY)?.let { NetworkPolicy.valueOf(it) } ?: NetworkPolicy.ANY
+            networkPolicy =
+                e.getString(ProxyKeys.EXTRA_NETWORK_POLICY)?.let { NetworkPolicy.valueOf(it) }
+                    ?: NetworkPolicy.ANY
         }
         require(moduleName.isNotBlank() && targetClass.isNotBlank()) { "缺少必要参数" }
     }

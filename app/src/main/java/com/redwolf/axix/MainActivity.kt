@@ -34,16 +34,16 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AxixTheme {
-                Scaffold( modifier = Modifier.fillMaxSize() ) { innerPadding ->
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
                         name = "Android",
                         modifier = Modifier
                             .padding(innerPadding)
                             .clickable {
-                               val isAllow =  FrequencyController.getInstance().isAllowed(
-                                   performAction().hashCode().toString(),
-                                   MAX_CALLS,
-                                   TIME_WINDOW_SECONDS
+                                val isAllow = FrequencyController.getInstance().isAllowed(
+                                    performAction().hashCode().toString(),
+                                    MAX_CALLS,
+                                    TIME_WINDOW_SECONDS
                                 )
 
                                 if (isAllow) {
@@ -52,7 +52,11 @@ class MainActivity : ComponentActivity() {
                                 } else {
                                     // 如果被限制，给出提示
                                     Log.w("FrequencyTest", "操作被阻止，调用过于频繁！");
-                                    Toast.makeText(this, "操作太频繁，请稍后再试！", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(
+                                        this,
+                                        "操作太频繁，请稍后再试！",
+                                        Toast.LENGTH_SHORT
+                                    ).show();
                                 }
 
                             }
