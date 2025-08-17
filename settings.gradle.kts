@@ -29,6 +29,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Axix"
 include(":app")
-include(":SelfControll")
 include(":plugin-api")
-include(":plugin-render-advanced")
