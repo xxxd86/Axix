@@ -15,13 +15,11 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LifecycleOwner
-import com.redwolf.plugin_api.PluginActivity
+import com.redwolf.plugin_api.core.PluginActivity
 
 class LocalHelloActivity : PluginActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        val tv = TextView(hostActivity).apply { text = "Hello from __host__ LocalHelloActivity" }
-//        hostActivity.setContentView(tv)
         val composeView = ComposeView(hostActivity).apply {
             // 方式 A：绑定到宿主生命周期（推荐）
             val owner = hostActivity as? LifecycleOwner

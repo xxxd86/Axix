@@ -1,6 +1,7 @@
 package com.redwolf.plugin_api
 
 object ProxyKeys {
+    const val HOST_NAME = "__host__"
     const val EXTRA_MODULE_NAME = "module_name"
     const val EXTRA_TARGET_CLASS = "target_activity"
     const val EXTRA_VERSION = "module_version"
@@ -13,4 +14,5 @@ object ProxyKeys {
     const val EXTRA_NETWORK_POLICY = "network_policy"
 
     const val HOST_LOCAL_MODULE = "__host__"
+    const val EXTRA_COMPONENT_KIND = "component_kind" // "activity" | "service" | "receiver"
 }

@@ -1,4 +1,6 @@
 import java.io.File
+import java.util.zip.ZipOutputStream
+import java.util.zip.ZipEntry
 
 // ----------------- SDK 工具定位（跨平台） -----------------
 fun sdkRoot(): String =
@@ -179,5 +181,78 @@ tasks.register("makePluginApkInstallable") {
 
         println("✅ Installable signed APK: ${signed.absolutePath}")
         println("   安装示例：adb install -r \"${signed.absolutePath}\"")
+    }
+}
+
+fun d8Tool() = sdkTool("d8") // 复用上文工具函数
+
+tasks.register("makeTinyDexBundle") {
+    group = "plugin"; description = "生成 dex-only 胶囊（.dex.jar）"
+    dependsOn("assembleRelease", ":plugin-api:assembleRelease")
+    doLast {
+        val androidJar = sdkPlatformJar("30")
+        val d8 = d8Tool()
+        val apiJar = pluginApiJar()
+
+        val work = layout.buildDirectory.dir("tmp/tiny_dex").get().asFile.apply { deleteRecursively(); mkdirs() }
+        // 从 AAR 解 classes.jar
+        val aar = layout.buildDirectory.file("outputs/aar/${project.name}-release.aar").get().asFile
+        val jarDir = File(work, "jar").apply { mkdirs() }
+        copy { from(zipTree(aar)); into(jarDir) }
+        val clsJar = File(jarDir, "classes.jar")
+
+        // d8 → classes.dex
+        exec {
+            commandLine(
+                d8, "--release",
+                "--no-desugaring",         // 可选：明确不做核心库 desugar
+                "--min-api", "30",
+                "--lib", androidJar,       // 仅引用，不会打包
+                "--classpath", apiJar.absolutePath, // 仅引用，不会打包
+                "--output", work.absolutePath,
+                clsJar.absolutePath        // ★ 唯一的程序输入
+            )
+        }
+
+        // 打成 .dex.jar（供 DexClassLoader 使用）
+        val outDir = layout.buildDirectory.dir("outputs/pluginApk").get().asFile.apply { mkdirs() }
+        val dexJar = File(outDir, "${project.name}-tiny.dex.jar")
+        ZipOutputStream(dexJar.outputStream()).use { zos ->
+            val dex = File(work, "classes.dex")
+            zos.putNextEntry(ZipEntry("classes.dex"))
+            dex.inputStream().use { it.copyTo(zos) }
+            zos.closeEntry()
+        }
+        println("Dex-only → ${dexJar.absolutePath}")
+    }
+}
+
+tasks.register("makeTinyDexBundleRenderAdvanced") {
+    group = "plugin"; description = "生成 render-advanced 的 dex-only 胶囊 (.dex.jar)"
+    dependsOn("assembleRelease", ":plugin-api:assembleRelease")
+    doLast {
+        val androidJar = sdkPlatformJar("30"); val d8 = sdkTool("d8"); val apiJar = pluginApiJar()
+        val work = layout.buildDirectory.dir("tmp/tiny_dex").get().asFile.apply { deleteRecursively(); mkdirs() }
+        val aar = layout.buildDirectory.file("outputs/aar/${project.name}-release.aar").get().asFile
+        val jarDir = File(work, "jar").apply { mkdirs() }
+        copy { from(zipTree(aar)); into(jarDir) }
+        val clsJar = File(jarDir, "classes.jar")
+        exec {
+            commandLine(
+                d8, "--release",
+                "--no-desugaring",         // 可选：明确不做核心库 desugar
+                "--min-api", "30",
+                "--lib", androidJar,       // 仅引用，不会打包
+                "--classpath", apiJar.absolutePath, // 仅引用，不会打包
+                "--output", work.absolutePath,
+                clsJar.absolutePath        // ★ 唯一的程序输入
+            )
+        }
+        val outDir = layout.buildDirectory.dir("outputs/pluginApk").get().asFile.apply { mkdirs() }
+        val dexJar = File(outDir, "plugin-render-advanced-tiny.dex.jar")
+        ZipOutputStream(dexJar.outputStream()).use { zos ->
+            val dex = File(work, "classes.dex"); zos.putNextEntry(ZipEntry("classes.dex")); dex.inputStream().use { it.copyTo(zos) }; zos.closeEntry()
+        }
+        println("Dex-only → ${dexJar.absolutePath}")
     }
 }

@@ -1,4 +1,4 @@
-package com.redwolf.plugin_runtime
+package com.redwolf.plugin_api.runtime
 
 data class ModuleDescriptor(
     val name: String,

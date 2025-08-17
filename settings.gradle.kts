@@ -31,5 +31,4 @@ rootProject.name = "Axix"
 include(":app")
 include(":SelfControll")
 include(":plugin-api")
-include(":plugin-runtime")
 include(":plugin-render-advanced")

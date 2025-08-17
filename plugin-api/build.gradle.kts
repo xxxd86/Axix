@@ -2,7 +2,9 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
 }
-
+apply {
+    from("publish.gradle.kts")
+}
 android {
     namespace = "com.redwolf.plugin_api"
     compileSdk = 36
@@ -34,12 +36,12 @@ android {
 
 dependencies {
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.material)
+    compileOnly(libs.androidx.core.ktx)
+    compileOnly(libs.androidx.appcompat)
+    compileOnly(libs.material)
+    compileOnly(libs.androidx.activity.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("androidx.appcompat:appcompat:1.7.0")
+    compileOnly("androidx.appcompat:appcompat:1.7.0")
 }

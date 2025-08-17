@@ -1,5 +1,4 @@
-package com.redwolf.plugin_api
-
+package com.redwolf.plugin_api.core
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -10,77 +9,136 @@ import android.content.res.Resources
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
-
+import com.redwolf.plugin_api.ProxyKeys
+//非必要不要乱动，影响动态打包
 open class PluginActivity : Activity() {
     protected lateinit var hostActivity: Activity
     protected lateinit var pluginResources: Resources
     protected lateinit var pluginPackageName: String
 
-    open fun attach(host: Activity, res: Resources?, pkg: String) {
+    open fun attach(host: Activity, res: Resources?, pkg: String?) {
         hostActivity = host
         if (res != null) pluginResources = res
-        pluginPackageName = pkg
+        if (pkg != null) {
+            pluginPackageName = pkg
+        }
     }
 
     override fun getResources(): Resources =
         if (::pluginResources.isInitialized) pluginResources else super.getResources()
+
     override fun getAssets(): AssetManager = resources.assets
     override fun getPackageName(): String =
         if (::pluginPackageName.isInitialized) pluginPackageName else super.getPackageName()
 
-    override fun setContentView(layoutResID: Int) { hostActivity.setContentView(layoutResID) }
-    override fun setContentView(view: View?) { if (view != null) hostActivity.setContentView(view) }
+    override fun setContentView(layoutResID: Int) {
+        hostActivity.setContentView(layoutResID)
+    }
+
+    override fun setContentView(view: View?) {
+        if (view != null) hostActivity.setContentView(view)
+    }
+
     override fun setContentView(view: View?, params: ViewGroup.LayoutParams?) {
         if (view != null && params != null) hostActivity.setContentView(view, params)
     }
+
     @Suppress("UNCHECKED_CAST")
     override fun <T : View?> findViewById(id: Int): T = hostActivity.findViewById(id)
 
     // ---------- 安全的 no-op super，实现给子类调用 ----------
     @SuppressLint("MissingSuperCall")
-    override fun onCreate(savedInstanceState: Bundle?) { /* no-op */ }
+    override fun onCreate(savedInstanceState: Bundle?) { /* no-op */
+    }
 
     @SuppressLint("MissingSuperCall")
-    override fun onStart() { /* no-op */ }
+    override fun onStart() { /* no-op */
+    }
 
     @SuppressLint("MissingSuperCall")
-    override fun onResume() { /* no-op */ }
+    override fun onResume() { /* no-op */
+    }
 
     @SuppressLint("MissingSuperCall")
-    override fun onPause() { /* no-op */ }
+    override fun onPause() { /* no-op */
+    }
 
     @SuppressLint("MissingSuperCall")
-    override fun onStop() { /* no-op */ }
+    override fun onStop() { /* no-op */
+    }
 
     @SuppressLint("MissingSuperCall")
-    override fun onDestroy() { /* no-op */ }
+    override fun onDestroy() { /* no-op */
+    }
 
     @SuppressLint("MissingSuperCall")
-    override fun onNewIntent(intent: Intent) { /* no-op */ }
+    override fun onNewIntent(intent: Intent) { /* no-op */
+    }
 
     @SuppressLint("MissingSuperCall")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) { /* no-op */ }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) { /* no-op */
+    }
 
     @SuppressLint("MissingSuperCall")
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) { /* no-op */ }
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) { /* no-op */
+    }
 
     @SuppressLint("MissingSuperCall")
-    override fun onSaveInstanceState(outState: Bundle) { /* no-op */ }
+    override fun onSaveInstanceState(outState: Bundle) { /* no-op */
+    }
 
     // ---------- 宿主可见的桥接 ----------
-    fun performCreate(saved: Bundle?) { onCreate(saved) }
-    fun performStart() { onStart() }
-    fun performResume() { onResume() }
-    fun performPause() { onPause() }
-    fun performStop() { onStop() }
-    fun performDestroy() { onDestroy() }
-    fun performNewIntent(intent: Intent) { onNewIntent(intent) }
-    fun performActivityResult(req: Int, res: Int, data: Intent?) { onActivityResult(req, res, data) }
-    fun performRequestPermissionsResult(req: Int, perms: Array<out String>, grantResults: IntArray) {
+    fun performCreate(saved: Bundle?) {
+        onCreate(saved)
+    }
+
+    fun performStart() {
+        onStart()
+    }
+
+    fun performResume() {
+        onResume()
+    }
+
+    fun performPause() {
+        onPause()
+    }
+
+    fun performStop() {
+        onStop()
+    }
+
+    fun performDestroy() {
+        onDestroy()
+    }
+
+    fun performNewIntent(intent: Intent) {
+        onNewIntent(intent)
+    }
+
+    fun performActivityResult(req: Int, res: Int, data: Intent?) {
+        onActivityResult(req, res, data)
+    }
+
+    fun performRequestPermissionsResult(
+        req: Int,
+        perms: Array<out String>,
+        grantResults: IntArray
+    ) {
         onRequestPermissionsResult(req, perms, grantResults)
     }
-    fun performSaveInstanceState(out: Bundle) { onSaveInstanceState(out) }
-    fun performBackPressed() { onBackPressed() }
+
+    fun performSaveInstanceState(out: Bundle) {
+        onSaveInstanceState(out)
+    }
+
+    fun performBackPressed() {
+        onBackPressed()
+    }
 
     // 便捷启动其他插件页或宿主本地页（保持你现有实现即可）
     fun startPlugin(

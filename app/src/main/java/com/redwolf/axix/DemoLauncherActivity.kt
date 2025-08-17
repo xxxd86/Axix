@@ -10,11 +10,12 @@ import android.widget.LinearLayout
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.redwolf.plugin_api.ProxyKeys
-import com.redwolf.plugin_runtime.ModuleDescriptor
-import com.redwolf.plugin_runtime.ModuleRegistry
-import com.redwolf.plugin_runtime.NetworkPolicy
-import com.redwolf.plugin_runtime.PluginRuntime
-import com.redwolf.plugin_runtime.Strategy
+import com.redwolf.plugin_api.core.PluginProxyActivity
+import com.redwolf.plugin_api.runtime.ModuleDescriptor
+import com.redwolf.plugin_api.runtime.ModuleRegistry
+import com.redwolf.plugin_api.runtime.NetworkPolicy
+import com.redwolf.plugin_api.runtime.PluginRuntime
+import com.redwolf.plugin_api.runtime.PluginStrategy
 
 @RequiresApi(Build.VERSION_CODES.P)
 class DemoLauncherActivity : AppCompatActivity() {
@@ -50,7 +51,7 @@ class DemoLauncherActivity : AppCompatActivity() {
                 moduleName = ProxyKeys.HOST_LOCAL_MODULE,
                 targetActivityClass = "com.redwolf.axix.LocalHelloActivity",
                 version = null, remoteUrl = null, sha256 = null, certSha256 = null,
-                strategy = Strategy.LOCAL_ONLY,
+                pluginStrategy = PluginStrategy.LOCAL_ONLY,
                 themeResId = 0, useFragmentFactory = true,
                 networkPolicy = NetworkPolicy.OFF
             )
@@ -65,12 +66,12 @@ class DemoLauncherActivity : AppCompatActivity() {
             val i = PluginProxyActivity.createIntent(
                 ctx,
                 "render-advanced",
-                "com.redwolf.plugin_render_advanced.PostEnhancedActivity",
-                "1.0.0",
+                "com.redwolf.plugin_render_advanced.PostTinyActivity",
+                "1.9.0",
                 null,
                 null,
                 null,
-                Strategy.LOCAL_FIRST,
+                PluginStrategy.LOCAL_FIRST,
                 0,
                 true,
                 NetworkPolicy.OFF
@@ -87,10 +88,10 @@ class DemoLauncherActivity : AppCompatActivity() {
                 try {
                     PluginRuntime.ensure(
                         ctx, "render-advanced", "1.5.0",
-                        Strategy.REMOTE_FIRST, null, null, null,
+                        PluginStrategy.REMOTE_FIRST, null, null, null,
                         NetworkPolicy.UNMETERED
                     )
-                } catch (ignored: Throwable) {
+                } catch (_: Throwable) {
                 }
             }.start()
 
@@ -100,7 +101,7 @@ class DemoLauncherActivity : AppCompatActivity() {
                 "com.redwolf.plugin_render_advanced.PostEnhancedActivity",
                 "1.5.0",
                 null, null, null,
-                Strategy.LOCAL_FIRST,
+                PluginStrategy.LOCAL_FIRST,
                 0, true,
                 NetworkPolicy.ANY
             )
@@ -120,7 +121,7 @@ class DemoLauncherActivity : AppCompatActivity() {
                 d?.url,
                 d?.sha256,
                 d?.certSha256,
-                Strategy.REMOTE_FIRST,
+                PluginStrategy.REMOTE_FIRST,
                 0, true,
                 NetworkPolicy.ANY
             )
@@ -138,7 +139,7 @@ class DemoLauncherActivity : AppCompatActivity() {
                 remoteUrl = null,
                 sha256 = null,
                 certSha256 = null,
-                strategy = Strategy.LOCAL_ONLY,
+                pluginStrategy = PluginStrategy.LOCAL_ONLY,
                 themeResId = 0,
                 useFragmentFactory = true,
                 networkPolicy = NetworkPolicy.OFF

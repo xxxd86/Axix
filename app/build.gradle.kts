@@ -45,9 +45,20 @@ android {
         }
     }
 }
-
+val copyTinyToAssets = tasks.register("copyTinyToAssets") {
+    dependsOn(":plugin-render-advanced:makeTinyDexBundleRenderAdvanced")
+    doLast {
+        val assets = layout.buildDirectory.dir("generated/fast_assets").get().asFile.apply { mkdirs() }
+        copy {
+            from(rootProject.project(":plugin-render-advanced").layout.buildDirectory.file("outputs/pluginApk/plugin-render-advanced-tiny.dex.jar"))
+            into(assets); rename { "render-advanced.dex.jar" }
+        }
+        println("assets prepared at: ${'$'}assets")
+    }
+}
+android.sourceSets.getByName("main").assets.srcDirs(files("${'$'}buildDir/generated/fast_assets"))
+tasks.named("preBuild").configure { dependsOn(copyTinyToAssets) }
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -65,7 +76,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(project(":plugin-api"))
-    implementation(project(":plugin-runtime"))
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation(files("libs/SelfControll-debug.aar"))
 }
