@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:dist="http://schemas.android.com/apk/distribution"
+    package="com.redwolf.feature_login"
+    >
+
+    <dist:module
+        dist:type="feature"
+        android:name="login"
+        dist:instant="false"
+        dist:title="Login">
+        <dist:delivery>
+<!--            <dist:install-time />-->
+            <dist:on-demand/>
+        </dist:delivery>
+        <dist:fusing dist:include="true" />
+    </dist:module>
+    <application>
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false"
+            android:label="Login"/>
+    </application>
+</manifest>

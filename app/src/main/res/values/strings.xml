@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Axix</string>
+    <string name="title_dynamicfeature">feature_login</string>
+    <string name="title_feature_login">Module Title</string>
 </resources>

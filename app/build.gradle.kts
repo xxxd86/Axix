@@ -44,20 +44,32 @@ android {
             }
         }
     }
-}
-val copyTinyToAssets = tasks.register("copyTinyToAssets") {
-    dependsOn(":plugin-render-advanced:makeTinyDexBundleRenderAdvanced")
-    doLast {
-        val assets = layout.buildDirectory.dir("generated/fast_assets").get().asFile.apply { mkdirs() }
-        copy {
-            from(rootProject.project(":plugin-render-advanced").layout.buildDirectory.file("outputs/pluginApk/plugin-render-advanced-tiny.dex.jar"))
-            into(assets); rename { "render-advanced.dex.jar" }
-        }
-        println("assets prepared at: ${'$'}assets")
+    dynamicFeatures += setOf( ":feature_login")
+    // 关键：开启 ViewBinding
+    buildFeatures {
+        viewBinding = true
+    }
+
+    // 如果有动态特性
+
+
+    bundle {
+        language { enableSplit = false }
     }
 }
-android.sourceSets.getByName("main").assets.srcDirs(files("${'$'}buildDir/generated/fast_assets"))
-tasks.named("preBuild").configure { dependsOn(copyTinyToAssets) }
+//val copyTinyToAssets = tasks.register("copyTinyToAssets") {
+//    dependsOn(":plugin-render-advanced:makeTinyDexBundleRenderAdvanced")
+//    doLast {
+//        val assets = layout.buildDirectory.dir("generated/fast_assets").get().asFile.apply { mkdirs() }
+//        copy {
+//            from(rootProject.project(":plugin-render-advanced").layout.buildDirectory.file("outputs/pluginApk/plugin-render-advanced-tiny.dex.jar"))
+//            into(assets); rename { "render-advanced.dex.jar" }
+//        }
+//        println("assets prepared at: ${'$'}assets")
+//    }
+//}
+//android.sourceSets.getByName("main").assets.srcDirs(files("${'$'}buildDir/generated/fast_assets"))
+//tasks.named("preBuild").configure { dependsOn(copyTinyToAssets) }
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -78,4 +90,7 @@ dependencies {
     implementation(project(":plugin-api"))
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation(files("libs/SelfControll-debug.aar"))
+    // Play Feature Delivery（按需安装）
+    implementation("com.google.android.play:core:1.10.3")
+    implementation("com.google.android.play:core-ktx:1.8.1")
 }

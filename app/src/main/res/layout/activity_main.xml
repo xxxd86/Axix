@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp">
+
+
+    <Button
+        android:id="@+id/btnOpenLogin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="打开 Login（按需下载）" />
+
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="12dp"/>
+
+
+    <Button
+        android:id="@+id/btnPreloadLogin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="后台预下载 Login（deferredInstall）" />
+
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="12dp"/>
+
+
+    <Button
+        android:id="@+id/btnUninstallLogin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="卸载 Login 模块（deferredUninstall）" />
+
+
+</LinearLayout>

@@ -30,3 +30,5 @@ dependencyResolutionManagement {
 rootProject.name = "Axix"
 include(":app")
 include(":plugin-api")
+include(":dynamicfeature")
+include(":feature_login")
