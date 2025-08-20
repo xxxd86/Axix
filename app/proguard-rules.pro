@@ -21,3 +21,5 @@
 #-renamesourcefileattribute SourceFile
 -keep class com.redwolf.plugin_render_advanced.** { *; }
 -keep class com.redwolf.plugin_api.** { *; }
+-keep class com.redwolf.feature_login.** { *; }
+-keepnames class com.redwolf.feature_login.LoginActivity

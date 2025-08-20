@@ -16,6 +16,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -44,17 +45,15 @@ android {
             }
         }
     }
-    dynamicFeatures += setOf( ":feature_login")
+    dynamicFeatures += setOf(":feature_login")
     // 关键：开启 ViewBinding
     buildFeatures {
         viewBinding = true
     }
 
     // 如果有动态特性
-
-
     bundle {
-        language { enableSplit = false }
+        language { enableSplit = true }
     }
 }
 //val copyTinyToAssets = tasks.register("copyTinyToAssets") {
@@ -93,4 +92,5 @@ dependencies {
     // Play Feature Delivery（按需安装）
     implementation("com.google.android.play:core:1.10.3")
     implementation("com.google.android.play:core-ktx:1.8.1")
+    implementation("androidx.multidex:multidex:2.0.1")
 }
