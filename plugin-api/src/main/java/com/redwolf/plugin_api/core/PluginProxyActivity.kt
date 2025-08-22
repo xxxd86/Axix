@@ -15,18 +15,17 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.redwolf.plugin_api.ProxyKeys
 import com.redwolf.plugin_api.runtime.NetworkPolicy
 import com.redwolf.plugin_api.runtime.PluginHandle
 import com.redwolf.plugin_api.runtime.PluginRuntime
 import com.redwolf.plugin_api.runtime.PluginStrategy
+import kotlinx.coroutines.launch
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.security.GeneralSecurityException
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.Future
 
 class PluginProxyActivity : AppCompatActivity() {
     private lateinit var moduleName: String
@@ -44,8 +43,6 @@ class PluginProxyActivity : AppCompatActivity() {
     private var plugin: PluginActivity? = null
     private lateinit var progress: ProgressBar
 
-    private val executor: ExecutorService = Executors.newSingleThreadExecutor()
-    private var future: Future<*>? = null
     @Volatile
     private var destroyed = false
 
@@ -109,12 +106,10 @@ class PluginProxyActivity : AppCompatActivity() {
             }
             return
         }
-
-        cancelLoad()
-        future = executor.submit {
+        lifecycleScope.launch {
             try {
                 val h = PluginRuntime.ensure(
-                    context = this,
+                    context = this@PluginProxyActivity,
                     module = moduleName,
                     version = version,
                     pluginStrategy = pluginStrategy,
@@ -123,7 +118,7 @@ class PluginProxyActivity : AppCompatActivity() {
                     certSha256 = certSha256,
                     networkPolicy = networkPolicy
                 )
-                if (destroyed) return@submit
+                if (destroyed) return@launch
                 runOnUiThread {
                     val cls = h.cl.loadClass(targetClass)
                     require(PluginActivity::class.java.isAssignableFrom(cls)) { "目标需继承 PluginActivity" }
@@ -137,7 +132,7 @@ class PluginProxyActivity : AppCompatActivity() {
                     val effectivePkg =
                         if (h.pkg.isBlank() || !loadedPkg.startsWith(h.pkg)) loadedPkg else h.pkg
                     // ★ 用 h.res，不要用 handle?.res；先赋 handle，再回到主线
-                    inst.attach(this, h.res, effectivePkg)
+                    inst.attach(this@PluginProxyActivity, h.res, effectivePkg)
                     handle = h
                     progress.visibility = ProgressBar.GONE
                     try {
@@ -152,6 +147,7 @@ class PluginProxyActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun toastFail(t: Throwable) {
         val root = generateSequence(t) { it.cause }.last()
         val msg = when (root) {
@@ -167,33 +163,36 @@ class PluginProxyActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun cancelLoad() {
-        future?.takeIf { !it.isDone }?.cancel(true)
-    }
     override fun onStart() {
         super.onStart(); plugin?.performStart()
     }
+
     override fun onResume() {
         super.onResume(); plugin?.performResume()
     }
+
     override fun onPause() {
         plugin?.performPause(); super.onPause()
     }
+
     override fun onStop() {
         plugin?.performStop(); super.onStop()
     }
+
     override fun onDestroy() {
         destroyed = true
-        cancelLoad(); executor.shutdownNow()
         plugin?.performDestroy(); plugin = null
         super.onDestroy()
     }
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState); plugin?.performSaveInstanceState(outState)
     }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent); setIntent(intent); plugin?.performNewIntent(intent)
     }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data); plugin?.performActivityResult(
             requestCode,
@@ -201,6 +200,7 @@ class PluginProxyActivity : AppCompatActivity() {
             data
         )
     }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -214,8 +214,10 @@ class PluginProxyActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        plugin?.performBackPressed(); if (!isFinishing) super.onBackPressed()
+        val handled = plugin?.performBackPressed() == true
+        if (!handled && !isFinishing) super.onBackPressed()
     }
+
     override fun getClassLoader(): ClassLoader = handle?.cl ?: super.getClassLoader()
     override fun getResources(): Resources = handle?.res ?: super.getResources()
     override fun getAssets(): AssetManager = (handle?.res ?: super.getResources()).assets
@@ -243,8 +245,9 @@ class PluginProxyActivity : AppCompatActivity() {
             remoteUrl = e.getString(ProxyKeys.EXTRA_REMOTE_URL)
             sha256 = e.getString(ProxyKeys.EXTRA_SHA256)
             certSha256 = e.getString(ProxyKeys.EXTRA_CERT_SHA256)
-            pluginStrategy = e.getString(ProxyKeys.EXTRA_STRATEGY)?.let { PluginStrategy.valueOf(it) }
-                ?: PluginStrategy.LOCAL_FIRST
+            pluginStrategy =
+                e.getString(ProxyKeys.EXTRA_STRATEGY)?.let { PluginStrategy.valueOf(it) }
+                    ?: PluginStrategy.LOCAL_FIRST
             themeResId = e.getInt(ProxyKeys.EXTRA_THEME_RES_ID, 0)
             useFragmentFactory = e.getBoolean(ProxyKeys.EXTRA_USE_FRAGMENT_FACTORY, true)
             networkPolicy =

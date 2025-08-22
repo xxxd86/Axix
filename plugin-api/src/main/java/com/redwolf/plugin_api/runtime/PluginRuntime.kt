@@ -10,7 +10,6 @@ import android.system.Os
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.redwolf.plugin_api.core.PluginBroadcastReceiver
-import com.redwolf.plugin_api.core.PluginService
 import dalvik.system.DexClassLoader
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
@@ -272,15 +271,8 @@ object PluginRuntime {
     } catch (_: Throwable) {
         null
     }
-    fun loadPluginService(ctx: Context, serviceClassName: String): PluginService? {
-        return try {
-            // 使用 Class.forName 来加载并且进行类型转换
-            val cls = ctx.classLoader.loadClass(serviceClassName)
-            cls.asSubclass(PluginService::class.java).getDeclaredConstructor().newInstance()
-        } catch (e: Exception) {
-            null  // 如果出现错误，返回 null
-        }
-    }
+
+
     // 安全地加载插件的 BroadcastReceiver
     fun loadPluginBroadcastReceiver(
         ctx: Context,

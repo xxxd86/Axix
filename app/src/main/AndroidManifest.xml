@@ -22,8 +22,8 @@
         <activity
             android:name="com.redwolf.plugin_api.core.PluginProxyActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
-            android:exported="false"
-            android:launchMode="singleTask"
+            android:exported="true"
+            android:launchMode="standard"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|uiMode|screenLayout|smallestScreenSize"/>
     </application>
 </manifest>

@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import com.redwolf.plugin_api.ProxyKeys
+
 //非必要不要乱动，影响动态打包
 open class PluginActivity : Activity() {
     protected lateinit var hostActivity: Activity
@@ -136,8 +137,43 @@ open class PluginActivity : Activity() {
         onSaveInstanceState(out)
     }
 
-    fun performBackPressed() {
-        onBackPressed()
+    /** 插件有机会消费返回；返回 true 表示已处理，不需要宿主再退栈 */
+    open fun onBackPressedPlugin(): Boolean = false
+
+    /** 宿主或插件主动触发返回。未消费则安全地 finish 宿主（不调用系统 Activity.onBackPressed）。 */
+    fun performBackPressed(): Boolean {
+        val handled = runCatching { onBackPressedPlugin() }.getOrDefault(false)
+        if (!handled) hostActivity.finish()     // 不走 Activity.onBackPressed，避免 NPE/递归
+        return handled
+    }
+
+    @Deprecated("插件请改覆写 onBackPressedPlugin()；此方法在伪 Activity 上不安全。")
+    final override fun onBackPressed() { /* no-op，防误用 */
+    }
+
+    inline fun <reified T : PluginActivity> PluginActivity.startPlugin(
+        module: String,
+        strategy: String = "LOCAL_FIRST",
+        version: String? = null,
+        url: String? = null,
+        sha: String? = null,
+        certSha256: String? = null,
+        themeResId: Int = 0,
+        netPolicy: String = "ANY",
+        hostProxyFqcn: String = "com.redwolf.axix.PluginProxyActivity"
+    ) {
+        startPlugin(
+            module = module,
+            activityClass = T::class.java.name,
+            strategy = strategy,
+            version = version,
+            url = url,
+            sha = sha,
+            certSha256 = certSha256,
+            themeResId = themeResId,
+            netPolicy = netPolicy,
+            hostProxyFqcn = hostProxyFqcn
+        )
     }
 
     // 便捷启动其他插件页或宿主本地页（保持你现有实现即可）
@@ -151,7 +187,7 @@ open class PluginActivity : Activity() {
         certSha256: String? = null,
         themeResId: Int = 0,
         netPolicy: String = "ANY",
-        hostProxyFqcn: String = "com.redwolf.axix.PluginProxyActivity"
+        hostProxyFqcn: String = "com.redwolf.plugin_api.core.PluginProxyActivity"
     ) {
         val ctx: Context = hostActivity
         val i = Intent().apply { setClassName(ctx, hostProxyFqcn) }

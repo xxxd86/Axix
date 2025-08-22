@@ -1,10 +1,11 @@
 package com.redwolf.axix
 
 import android.os.Bundle
-import android.widget.TextView
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -18,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LifecycleOwner
 import com.redwolf.plugin_api.core.PluginActivity
 
-class LocalHelloActivity : PluginActivity() {
+class LocalHelloStep2Activity : PluginActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val composeView = ComposeView(hostActivity).apply {
@@ -34,8 +35,10 @@ class LocalHelloActivity : PluginActivity() {
                     ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
                 )
             }
+
             setContent { PluginScreen2(onClick = {
-                this@LocalHelloActivity.startPlugin("__host__","com.redwolf.axix.LocalHelloStep2Activity")
+                this@LocalHelloStep2Activity.performBackPressed()
+//                hostActivity.onBackPressedDispatcher.onBackPressed()
             }) }
         }
 
@@ -52,7 +55,7 @@ private fun PluginScreen2(onClick:()-> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 TextButton (content = {
-                    Text("跳转plugin LocalHelloStep2Activity")
+                    Text("回到back")
                 }, onClick = {
                     onClick.invoke()
                 })
