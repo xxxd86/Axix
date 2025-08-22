@@ -44,4 +44,14 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     compileOnly("androidx.appcompat:appcompat:1.7.0")
+    val work_version = "2.10.3"
+
+    // (Java only)
+    implementation("androidx.work:work-runtime:$work_version")
+
+    // Kotlin + coroutines
+    implementation("androidx.work:work-runtime-ktx:$work_version")
+
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 }

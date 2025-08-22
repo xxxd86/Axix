@@ -151,31 +151,6 @@ open class PluginActivity : Activity() {
     final override fun onBackPressed() { /* no-op，防误用 */
     }
 
-    inline fun <reified T : PluginActivity> PluginActivity.startPlugin(
-        module: String,
-        strategy: String = "LOCAL_FIRST",
-        version: String? = null,
-        url: String? = null,
-        sha: String? = null,
-        certSha256: String? = null,
-        themeResId: Int = 0,
-        netPolicy: String = "ANY",
-        hostProxyFqcn: String = ProxyKeys.HOST_PLUGIN_PROXY_ACTIVITY
-    ) {
-        startPlugin(
-            module = module,
-            activityClass = T::class.java.name,
-            strategy = strategy,
-            version = version,
-            url = url,
-            sha = sha,
-            certSha256 = certSha256,
-            themeResId = themeResId,
-            netPolicy = netPolicy,
-            hostProxyFqcn = hostProxyFqcn
-        )
-    }
-
     // 便捷启动其他插件页或宿主本地页（保持你现有实现即可）
     fun startPlugin(
         module: String,

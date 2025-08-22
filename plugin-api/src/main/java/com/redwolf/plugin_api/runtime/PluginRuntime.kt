@@ -1,7 +1,9 @@
 package com.redwolf.plugin_api.runtime
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES
+import android.content.pm.Signature
 import android.content.res.AssetManager
 import android.content.res.Resources
 import android.os.Build
@@ -9,13 +11,14 @@ import android.system.ErrnoException
 import android.system.Os
 import android.util.Log
 import androidx.annotation.RequiresApi
-import com.redwolf.plugin_api.core.PluginBroadcastReceiver
+import com.redwolf.plugin_api.distribution.RollbackStore
 import dalvik.system.DexClassLoader
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.lang.reflect.Method
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
@@ -31,6 +34,11 @@ object PluginRuntime {
     private const val READ = 60_000
     private const val MODE_DIR_700 = 0x1C0  // 等价八进制 0700，十进制 448
     private const val MODE_FILE_444 = 0x124  // 等价八进制 0444，十进制 292
+    private fun cachedApk(ctx: Context, module: String, ver: String?) =
+        File(
+            File(ctx.filesDir, "modules").apply { mkdirs(); lockDir(this) },
+            "${module}-${ver}.apk"
+        )
 
     @RequiresApi(Build.VERSION_CODES.P)
     @Throws(Exception::class)
@@ -56,40 +64,60 @@ object PluginRuntime {
                 if (cert == null) cert = d.certSha256
             }
         }
+        val primary = try {
+            ensureApkOrDex(
+                context,
+                module,
+                ver ?: "unknown",
+                pluginStrategy,
+                url,
+                sha,
+                cert,
+                networkPolicy
+            )
+                ?: throw IllegalStateException("no source for plugin")
+        } catch (e: Throwable) {
+            // 失败 → 回滚尝试
+            val lkg = RollbackStore.get(context, module)
+            if (lkg != null) {
+                Log.w(TAG, "ensure fail, trying LKG ${'$'}{lkg.version} : ${'$'}{e.message}")
+                val f = cachedApk(context, module, lkg.version)
+                if (f.exists()) buildHandle(context, module, f).also {
+                    return it
+                }
+            }
+            throw e
+        }
+        val handle = buildHandle(context, module, primary)
+        // 标记本次成功为 LKG
+        RollbackStore.saveGood(context, module, RollbackStore.Lkg(ver, url, sha, cert))
+        return handle
+    }
 
-        val apk = ensureApkOrDex(
-            context,
-            module,
-            ver ?: "unknown",
-            pluginStrategy,
-            url,
-            sha,
-            cert,
-            networkPolicy
-        )
-            ?: throw IllegalStateException("插件不可用：$module")
-
-        val dexOut = context.getDir("dex_remote", Context.MODE_PRIVATE)
-        val libDir = File(context.filesDir, "libs/$module").apply { mkdirs() }
+    private fun buildHandle(ctx: Context, module: String, apk: File): PluginHandle {
+        // Dex & so
+        val dexOut = ctx.getDir("dex_remote", Context.MODE_PRIVATE)
+        val libDir = File(ctx.filesDir, "libs/${'$'}module")
         extractLibs(apk, libDir)
-
         val cl = DexClassLoader(
-            apk.absolutePath,
-            dexOut.absolutePath,
-            libDir.absolutePath,
-            context.classLoader
+            apk.absolutePath, dexOut.absolutePath, libDir.absolutePath, ctx.classLoader
         )
 
+        // 资源
         val am = AssetManager::class.java.newInstance()
         assertNoDuplicateManifest(apk)
-        val add = AssetManager::class.java.getMethod("addAssetPath", String::class.java)
+        val add: Method = AssetManager::class.java.getMethod("addAssetPath", String::class.java)
         add.invoke(am, apk.absolutePath)
-        val host = context.resources
-        val res = Resources(am, host.displayMetrics, host.configuration)
+        val res = Resources(am, ctx.resources.displayMetrics, ctx.resources.configuration)
 
-        val pm = context.packageManager
-        val pi = pm.getPackageArchiveInfo(apk.absolutePath, 0)
-        val pkg = pi?.packageName ?: context.packageName
+        // 包名（解析失败不阻断）
+        var pkg: String? = null
+        try {
+            val flags =
+                if (Build.VERSION.SDK_INT >= 28) PackageManager.GET_SIGNING_CERTIFICATES else 0
+            pkg = ctx.packageManager.getPackageArchiveInfo(apk.absolutePath, flags)?.packageName
+        } catch (_: Throwable) {
+        }
 
         return PluginHandle(module, apk, cl, res, pkg)
     }
@@ -272,22 +300,6 @@ object PluginRuntime {
         null
     }
 
-
-    // 安全地加载插件的 BroadcastReceiver
-    fun loadPluginBroadcastReceiver(
-        ctx: Context,
-        receiverClassName: String
-    ): PluginBroadcastReceiver? {
-        return try {
-            // 使用 Class.forName 来加载并且进行类型转换
-            val cls = ctx.classLoader.loadClass(receiverClassName)
-            cls.asSubclass(PluginBroadcastReceiver::class.java).getDeclaredConstructor()
-                .newInstance()
-        } catch (e: Exception) {
-            null  // 如果出现错误，返回 null
-        }
-    }
-
     @RequiresApi(Build.VERSION_CODES.P)
     @Throws(Exception::class)
     private fun downloadIfNeeded(
@@ -362,24 +374,6 @@ object PluginRuntime {
         return d.joinToString("") { String.format(Locale.US, "%02x", it) }
     }
 
-    //    private fun makeReadOnly(file: File) {
-//        try {
-//            // 0444 = r--r--r--
-//            Os.chmod(file.absolutePath, 0o444)
-//        } catch (_: ErrnoException) {
-//            // 兜底：尽可能去掉写/执行权限
-//            file.setReadable(true, /*ownerOnly*/ true)
-//            file.setWritable(false, /*ownerOnly*/ false)
-//            file.setExecutable(false, /*ownerOnly*/ false)
-//        }
-//    }
-//
-//    private fun lockDir(dir: File) {
-//        try {
-//            // modules 目录建议 0700，避免目录本身被判定不安全
-//            Os.chmod(dir.absolutePath, 0o700)
-//        } catch (_: Throwable) { /* 忽略 */ }
-//    }
     private fun extractLibs(apk: File, outDir: File) {
         try {
             ZipFile(apk).use { zf ->
@@ -403,4 +397,46 @@ object PluginRuntime {
         } catch (_: Throwable) {
         }
     }
+
+
+    private fun verifyCertIfNeeded(ctx: Context, apk: File, expected: String): Boolean {
+        return try {
+            val pm = ctx.packageManager
+            if (Build.VERSION.SDK_INT >= 28) {
+                val pi = pm.getPackageArchiveInfo(
+                    apk.absolutePath,
+                    PackageManager.GET_SIGNING_CERTIFICATES
+                )
+                    ?: return false
+                val sigs = pi.signingInfo?.let { si ->
+                    if (si.hasMultipleSigners()) si.apkContentsSigners else si.signingCertificateHistory
+                } ?: return false
+                sigs.any { s ->
+                    expected.equals(
+                        certSha256(s.toByteArray()),
+                        ignoreCase = true
+                    )
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                val pi = pm.getPackageArchiveInfo(
+                    apk.absolutePath,
+                    PackageManager.GET_SIGNATURES
+                )
+                    ?: return false
+
+                @Suppress("DEPRECATION")
+                val sigs: Array<Signature> = pi.signatures ?: return false
+                sigs.any { s ->
+                    expected.equals(
+                        certSha256(s.toByteArray()),
+                        ignoreCase = true
+                    )
+                }
+            }
+        } catch (t: Throwable) {
+            Log.w(TAG, "verifyCert fail", t); false
+        }
+    }
+
 }

@@ -130,7 +130,7 @@ class PluginProxyActivity : AppCompatActivity() {
 
                     val loadedPkg = cls.`package`?.name ?: ""
                     val effectivePkg =
-                        if (h.pkg.isBlank() || !loadedPkg.startsWith(h.pkg)) loadedPkg else h.pkg
+                        if (h.pkg?.isBlank() == true || !loadedPkg.startsWith(h.pkg?: "Foxx")) loadedPkg else h.pkg
                     // ★ 用 h.res，不要用 handle?.res；先赋 handle，再回到主线
                     inst.attach(this@PluginProxyActivity, h.res, effectivePkg)
                     handle = h

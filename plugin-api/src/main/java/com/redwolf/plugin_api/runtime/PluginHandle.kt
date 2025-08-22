@@ -8,5 +8,5 @@ data class PluginHandle(
     val apk: File,
     val cl: ClassLoader,
     val res: Resources,
-    val pkg: String
+    val pkg: String?
 )
