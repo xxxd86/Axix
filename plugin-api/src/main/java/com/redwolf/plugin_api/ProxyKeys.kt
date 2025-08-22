@@ -15,4 +15,5 @@ object ProxyKeys {
 
     const val HOST_LOCAL_MODULE = "__host__"
     const val EXTRA_COMPONENT_KIND = "component_kind" // "activity" | "service" | "receiver"
+    const val HOST_PLUGIN_PROXY_ACTIVITY = "com.redwolf.plugin_api.core.PluginProxyActivity"
 }

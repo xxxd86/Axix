@@ -160,7 +160,7 @@ open class PluginActivity : Activity() {
         certSha256: String? = null,
         themeResId: Int = 0,
         netPolicy: String = "ANY",
-        hostProxyFqcn: String = "com.redwolf.axix.PluginProxyActivity"
+        hostProxyFqcn: String = ProxyKeys.HOST_PLUGIN_PROXY_ACTIVITY
     ) {
         startPlugin(
             module = module,
@@ -187,7 +187,7 @@ open class PluginActivity : Activity() {
         certSha256: String? = null,
         themeResId: Int = 0,
         netPolicy: String = "ANY",
-        hostProxyFqcn: String = "com.redwolf.plugin_api.core.PluginProxyActivity"
+        hostProxyFqcn: String = ProxyKeys.HOST_PLUGIN_PROXY_ACTIVITY
     ) {
         val ctx: Context = hostActivity
         val i = Intent().apply { setClassName(ctx, hostProxyFqcn) }
