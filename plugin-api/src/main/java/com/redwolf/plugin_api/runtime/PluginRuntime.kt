@@ -11,6 +11,7 @@ import android.system.ErrnoException
 import android.system.Os
 import android.util.Log
 import androidx.annotation.RequiresApi
+import com.redwolf.plugin_api.core.PluginProxyActivity
 import com.redwolf.plugin_api.distribution.RollbackStore
 import dalvik.system.DexClassLoader
 import java.io.BufferedInputStream
@@ -46,11 +47,11 @@ object PluginRuntime {
         context: Context,
         module: String,
         version: String?,
-        pluginStrategy: PluginStrategy,
+        pluginStrategy: PluginProxyActivity.PluginStrategy,
         remoteUrl: String?,
         sha256: String?,
         certSha256: String?,
-        networkPolicy: NetworkPolicy
+        networkPolicy: PluginProxyActivity.NetworkPolicy
     ): PluginHandle {
         var url = remoteUrl;
         var ver = version;
@@ -137,11 +138,11 @@ object PluginRuntime {
         ctx: Context,
         module: String,
         ver: String,
-        pluginStrategy: PluginStrategy,
+        pluginStrategy: PluginProxyActivity.PluginStrategy,
         url: String?,
         sha256: String?,
         certSha: String?,
-        net: NetworkPolicy
+        net: PluginProxyActivity.NetworkPolicy
     ): File? {
         val dir = File(ctx.filesDir, "modules").apply { mkdirs() }
         // 1) 计算候选后缀优先级（基于 URL / assets / 默认）
@@ -203,22 +204,22 @@ object PluginRuntime {
             }
 
             val got = when (pluginStrategy) {
-                PluginStrategy.LOCAL_ONLY -> {
+                PluginProxyActivity.PluginStrategy.LOCAL_ONLY -> {
                     if (valid(cache)) cache else tryAssets()
                 }
 
-                PluginStrategy.LOCAL_FIRST -> {
+                PluginProxyActivity.PluginStrategy.LOCAL_FIRST -> {
                     if (valid(cache)) cache
                     else tryAssets() ?: tryRemote()
                 }
 
-                PluginStrategy.REMOTE_FIRST -> {
+                PluginProxyActivity.PluginStrategy.REMOTE_FIRST -> {
                     val r = tryRemote()
                     if (valid(r)) r ?: tryAssets()
                     else tryAssets()
                 }
 
-                PluginStrategy.REMOTE_ONLY -> tryRemote()
+                PluginProxyActivity.PluginStrategy.REMOTE_ONLY -> tryRemote()
             }
 
             if (valid(got)) return got
@@ -308,9 +309,9 @@ object PluginRuntime {
         to: File,
         sha256: String?,
         certSha: String?,
-        net: NetworkPolicy
+        net: PluginProxyActivity.NetworkPolicy
     ): File? {
-        if (url == null || net == NetworkPolicy.OFF) return null
+        if (url == null || net == PluginProxyActivity.NetworkPolicy.OFF) return null
         to.parentFile?.mkdirs()
         val tmp = File(to.parentFile, to.name + ".downloading")
 

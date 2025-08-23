@@ -19,3 +19,18 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# 保持对外 API 类与成员名（便于调试/文档）
+#-keep class com.redwolf.plugin_api.core.PluginActivity { *; }
+#-keep class com.redwolf.plugin_api.ProxyKeys { *; }
+#-keep class com.redwolf.plugin_api.runtime.ModuleRegistry { *; }
+#-keep class com.redwolf.plugin_api.core.PluginProxyActivity { *; }
+#-keepclassmembers class com.redwolf.plugin_api.core.PluginProxyActivity {
+#   public *;
+#}
+#-keep class com.redwolf.plugin_api.runtime.ModuleDescriptor
+## 去掉调试信息可再省一点（会影响行号堆栈）
+#-dontnote
+#-dontwarn
+#-keeppackagenames com.redwolf.plugin_api
+#-renamesourcefileattribute Source
+#-keepattributes *Annotation*  # 如果没有反射需求也可进一步删减 attributes

@@ -17,10 +17,8 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.redwolf.plugin_api.ProxyKeys
-import com.redwolf.plugin_api.runtime.NetworkPolicy
 import com.redwolf.plugin_api.runtime.PluginHandle
 import com.redwolf.plugin_api.runtime.PluginRuntime
-import com.redwolf.plugin_api.runtime.PluginStrategy
 import kotlinx.coroutines.launch
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -28,6 +26,9 @@ import java.net.UnknownHostException
 import java.security.GeneralSecurityException
 
 class PluginProxyActivity : AppCompatActivity() {
+    enum class PluginStrategy { LOCAL_FIRST, REMOTE_FIRST, REMOTE_ONLY, LOCAL_ONLY }
+    enum class NetworkPolicy { ANY, UNMETERED, OFF }
+
     private lateinit var moduleName: String
     private lateinit var targetClass: String
     private var version: String? = null
@@ -130,7 +131,10 @@ class PluginProxyActivity : AppCompatActivity() {
 
                     val loadedPkg = cls.`package`?.name ?: ""
                     val effectivePkg =
-                        if (h.pkg?.isBlank() == true || !loadedPkg.startsWith(h.pkg?: "Foxx")) loadedPkg else h.pkg
+                        if (h.pkg?.isBlank() == true || !loadedPkg.startsWith(
+                                h.pkg ?: "Foxx"
+                            )
+                        ) loadedPkg else h.pkg
                     // ★ 用 h.res，不要用 handle?.res；先赋 handle，再回到主线
                     inst.attach(this@PluginProxyActivity, h.res, effectivePkg)
                     handle = h

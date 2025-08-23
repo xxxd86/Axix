@@ -13,9 +13,7 @@ import com.redwolf.plugin_api.ProxyKeys
 import com.redwolf.plugin_api.core.PluginProxyActivity
 import com.redwolf.plugin_api.runtime.ModuleDescriptor
 import com.redwolf.plugin_api.runtime.ModuleRegistry
-import com.redwolf.plugin_api.runtime.NetworkPolicy
 import com.redwolf.plugin_api.runtime.PluginRuntime
-import com.redwolf.plugin_api.runtime.PluginStrategy
 
 @RequiresApi(Build.VERSION_CODES.P)
 class DemoLauncherActivity : AppCompatActivity() {
@@ -51,9 +49,9 @@ class DemoLauncherActivity : AppCompatActivity() {
                 moduleName = ProxyKeys.HOST_LOCAL_MODULE,
                 targetActivityClass = "com.redwolf.axix.LocalHelloActivity",
                 version = null, remoteUrl = null, sha256 = null, certSha256 = null,
-                pluginStrategy = PluginStrategy.LOCAL_ONLY,
+                pluginStrategy = PluginProxyActivity.PluginStrategy.LOCAL_ONLY,
                 themeResId = 0, useFragmentFactory = true,
-                networkPolicy = NetworkPolicy.OFF
+                networkPolicy = PluginProxyActivity.NetworkPolicy.OFF
             )
             startActivity(intent)
         }
@@ -71,10 +69,10 @@ class DemoLauncherActivity : AppCompatActivity() {
                 null,
                 null,
                 null,
-                PluginStrategy.LOCAL_FIRST,
+                PluginProxyActivity.PluginStrategy.LOCAL_FIRST,
                 0,
                 true,
-                NetworkPolicy.OFF
+                PluginProxyActivity.NetworkPolicy.OFF
             )
             ctx.startActivity(i)
         }
@@ -88,8 +86,8 @@ class DemoLauncherActivity : AppCompatActivity() {
                 try {
                     PluginRuntime.ensure(
                         ctx, "render-advanced", "1.5.0",
-                        PluginStrategy.REMOTE_FIRST, null, null, null,
-                        NetworkPolicy.UNMETERED
+                        PluginProxyActivity.PluginStrategy.REMOTE_FIRST, null, null, null,
+                        PluginProxyActivity.NetworkPolicy.UNMETERED
                     )
                 } catch (_: Throwable) {
                 }
@@ -101,9 +99,9 @@ class DemoLauncherActivity : AppCompatActivity() {
                 "com.redwolf.plugin_render_advanced.PostEnhancedActivity",
                 "1.5.0",
                 null, null, null,
-                PluginStrategy.LOCAL_FIRST,
+                PluginProxyActivity.PluginStrategy.LOCAL_FIRST,
                 0, true,
-                NetworkPolicy.ANY
+                PluginProxyActivity.NetworkPolicy.ANY
             )
             ctx.startActivity(i)
         }
@@ -121,9 +119,9 @@ class DemoLauncherActivity : AppCompatActivity() {
                 d?.url,
                 d?.sha256,
                 d?.certSha256,
-                PluginStrategy.REMOTE_FIRST,
+                PluginProxyActivity.PluginStrategy.REMOTE_FIRST,
                 0, true,
-                NetworkPolicy.ANY
+                PluginProxyActivity.NetworkPolicy.ANY
             )
             ctx.startActivity(i)
         }
@@ -139,10 +137,10 @@ class DemoLauncherActivity : AppCompatActivity() {
                 remoteUrl = null,
                 sha256 = null,
                 certSha256 = null,
-                pluginStrategy = PluginStrategy.LOCAL_ONLY,
+                pluginStrategy = PluginProxyActivity.PluginStrategy.LOCAL_ONLY,
                 themeResId = 0,
                 useFragmentFactory = true,
-                networkPolicy = NetworkPolicy.OFF
+                networkPolicy = PluginProxyActivity.NetworkPolicy.OFF
             )
             ctx.startActivity(intent)
         }

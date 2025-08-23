@@ -112,7 +112,7 @@ tasks.register("makePluginApk") {
         copy {
             from(unsignedResApk)
             into(outDir)
-            rename { "${project.name}-plugin.apk" }
+            rename { "${project.name}-plugin.aar" }
         }
         println("plugin.apk 生成：${File(outDir, "${project.name}-plugin.apk").absolutePath}")
     }
@@ -181,6 +181,20 @@ tasks.register("makePluginApkInstallable") {
 
         println("✅ Installable signed APK: ${signed.absolutePath}")
         println("   安装示例：adb install -r \"${signed.absolutePath}\"")
+    }
+}
+// 产出 compile 用的 classes.jar
+tasks.register("makePluginApiCompileJar") {
+    group = "plugin"; description = "导出 plugin-api 的 classes.jar（供 implementation 使用）"
+    dependsOn(":plugin-api:assembleRelease")
+    doLast {
+        val aar = project(":plugin-api").layout.buildDirectory
+            .file("outputs/aar/plugin-api-release.aar").get().asFile
+        val outDir = layout.buildDirectory.dir("outputs/apiBundles").get().asFile.apply { mkdirs() }
+        val tmp = layout.buildDirectory.dir("tmp/pluginApi").get().asFile.apply { deleteRecursively(); mkdirs() }
+        copy { from(zipTree(aar)); into(tmp) }
+        copy { from(File(tmp, "classes.jar")); into(outDir); rename { "plugin-api-classes.jar" } }
+        println("→ ${File(outDir, "plugin-api-classes.jar").absolutePath}")
     }
 }
 
