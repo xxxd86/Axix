@@ -10,7 +10,7 @@
         android:label="PluginQuickStart" android:allowBackup="true"
         android:usesCleartextTraffic="true"
         >
-        <activity android:name=".DemoLauncherActivity" android:exported="true"
+        <activity android:name=".main.MainActivity" android:exported="true"
             tools:targetApi="28"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             >

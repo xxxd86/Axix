@@ -78,6 +78,14 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(project(":plugin-api"))
     implementation("androidx.appcompat:appcompat:1.7.0")
-
+    implementation(project(":mvi-dynamic-plugin"))
     //implementation(files("libs/plugin-api-classes.jar"))
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.4")
+//    val lifecycle_version = "2.9.2"
+//    val arch_version = "2.2.0"
+//
+//    // ViewModel
+//    implementation("androidx.lifecycle:lifecycle-viewmodel:$lifecycle_version")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose")
+    implementation("androidx.compose.material:material-icons-extended")
 }

@@ -30,3 +30,4 @@ dependencyResolutionManagement {
 rootProject.name = "Axix"
 include(":app")
 include(":plugin-api")
+include(":mvi-dynamic-plugin")
