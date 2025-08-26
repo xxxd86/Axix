@@ -5,7 +5,9 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="Manifest.permission.ACCESS_NETWORK_STATE"/>
     <application
+        android:name=".AxixApp"
         android:icon="@mipmap/ic_launcher"
         android:label="PluginQuickStart" android:allowBackup="true"
         android:usesCleartextTraffic="true"

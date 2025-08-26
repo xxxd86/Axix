@@ -1,7 +1,9 @@
 package com.redwolf.mvi_dynamic_plugin.traffic
 
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 
 
 class TokenBucket(private val capacity: Int, private val refillPerSecond: Int) {
@@ -18,3 +20,16 @@ class TokenBucket(private val capacity: Int, private val refillPerSecond: Int) {
         }
     }
 }
+
+data class TrafficCfg(val maxConcurrent: Int = 2, val tokensPerSec: Int = 4, val capacity: Int = 8)
+
+class TrafficGate(private val cfg: TrafficCfg) {
+    private val bucket = TokenBucket(cfg.capacity, cfg.tokensPerSec)
+    private val sem = Semaphore(cfg.maxConcurrent)
+    suspend fun <T> run(block: suspend () -> T): T {
+        if (!bucket.tryConsume()) throw RejectedException("rate limited")
+        return sem.withPermit { block() }
+    }
+}
+
+class RejectedException(msg: String): RuntimeException(msg)
