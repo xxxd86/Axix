@@ -1,0 +1,15 @@
+syntax = "proto3";
+package dev.analysis.v1;
+option java_multiple_files = true;
+option java_package = "dev.analysis.v1";
+option java_outer_classname = "AnalysisProto";
+message AnalysisMeta { string tool_version = 1; int64 generated_at_ms = 2; string mode = 3; }
+message ModuleNode { string id = 1; string type = 2; int32 size = 3; }
+message ModuleEdge { string source = 1; string target = 2; int32 weight = 3; }
+message ModuleGraph { AnalysisMeta meta = 1; repeated ModuleNode nodes = 2; repeated ModuleEdge edges = 3; }
+message CalleeMethods { string callee_module = 1; repeated string methods = 2; }
+message CallerUsedMethods { string caller_module = 1; repeated CalleeMethods callees = 2; }
+message UsedMethodsByModule { AnalysisMeta meta = 1; repeated CallerUsedMethods entries = 2; }
+message ClassRef { string caller_class = 1; string callee_class = 2; int32 count = 3; }
+message ClassRefs { AnalysisMeta meta = 1; repeated ClassRef refs = 2; }
+message SelectionResult { AnalysisMeta meta = 1; repeated string seeds = 2; repeated string reachable_modules = 3; repeated CallerUsedMethods external_used = 4; }

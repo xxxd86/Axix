@@ -45,6 +45,7 @@ android {
         }
     }
 }
+
 ////val copyTinyToAssets = tasks.register("copyTinyToAssets") {
 ////    dependsOn(":plugin-render-advanced:makeTinyDexBundleRenderAdvanced")
 ////    doLast {
@@ -88,4 +89,5 @@ dependencies {
 //    implementation("androidx.lifecycle:lifecycle-viewmodel:$lifecycle_version")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose")
     implementation("androidx.compose.material:material-icons-extended")
+//    implementation(project(":proto-analyzer"))
 }

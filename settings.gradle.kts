@@ -10,11 +10,13 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        mavenLocal() // ★
     }
 }
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
+        gradlePluginPortal()
         maven { url=uri ("https://jitpack.io") }
         maven { url=uri ("https://maven.aliyun.com/repository/releases") }
 //        maven { url 'https://maven.aliyun.com/repository/jcenter' }
@@ -24,6 +26,7 @@ dependencyResolutionManagement {
         maven { url=uri ("https://maven.aliyun.com/repository/public") }
         google()
         mavenCentral()
+        mavenLocal() // ★
     }
 }
 
@@ -31,3 +34,4 @@ rootProject.name = "Axix"
 include(":app")
 include(":plugin-api")
 include(":mvi-dynamic-plugin")
+include(":proto-analyzer")
